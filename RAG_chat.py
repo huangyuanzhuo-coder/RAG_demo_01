@@ -24,7 +24,6 @@ llm = ChatTongyi()
 
 def pdf2doc(file_path) -> [DOCUMENT]:
     """
-    todo: pdf文档抽取
     :param file_path: pdf 文档
     :return: doc
     """
@@ -43,9 +42,8 @@ def pdf2doc(file_path) -> [DOCUMENT]:
     return splits
 
 
+# 文档划分 与 嵌入
 def RAG_fun() -> RetrievalQA:
-    # 文档划分 与 嵌入
-
     splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
     loader = UnstructuredFileLoader("./md_files/test.md")
     docs = loader.load()
@@ -53,7 +51,27 @@ def RAG_fun() -> RetrievalQA:
     for i in splits:
         print(i)
 
-    embeddings = HuggingFaceEmbeddings(model_name="D:\code\HuggingFace/bge-large-zh-v1.5")
+    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    # embeddings.client = sentence_transformers.SentenceTransformer(embeddings.model_name, device='cpu')
+    vector_store = FAISS.from_documents(splits, embeddings)
+    retriever = vector_store.as_retriever()
+
+    chain = RetrievalQA.from_chain_type(
+        llm=llm, retriever=retriever
+    )
+
+    return chain
+
+
+def RAG_run(inputs) -> BaseMessage:
+    splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
+    loader = UnstructuredFileLoader("./md_files/test.md")
+    docs = loader.load()
+    splits = splitter.split_documents(docs)
+    for i in splits:
+        print(i)
+
+    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     # embeddings.client = sentence_transformers.SentenceTransformer(embeddings.model_name, device='cpu')
     vector_store = FAISS.from_documents(splits, embeddings)
     retriever = vector_store.as_retriever()
@@ -67,25 +85,19 @@ def RAG_fun() -> RetrievalQA:
         问题：
         {question}
     """
-
-    # prompt = ChatPromptTemplate.from_template(
-    #     prompt_template,
-    #     partial_variables={"format_instructions": format_instructions},
-    # )
-    #
-    # setup_and_retrieval = RunnableParallel(
-    #     {"context": retriever, "question": RunnablePassthrough()}
-    # )
-    # # RAG
-    # chain = setup_and_retrieval | prompt | llm
-    # return chain.invoke(inputs)
-
-    chain = RetrievalQA.from_chain_type(
-        llm=llm, retriever=retriever
+    prompt = ChatPromptTemplate.from_template(
+        prompt_template,
+        partial_variables={"format_instructions": format_instructions},
     )
 
-    return chain
+    setup_and_retrieval = RunnableParallel(
+        {"context": retriever, "question": RunnablePassthrough()}
+    )
+    # RAG
+    chain = setup_and_retrieval | prompt | llm
+
+    return chain.invoke(inputs)
 
 
 if __name__ == '__main__':
-    print(RAG_fun("武汉力源信息技术股份有限公司的地址在哪里？"))
+    print(RAG_run("武汉力源信息技术股份有限公司的地址在哪里？"))
