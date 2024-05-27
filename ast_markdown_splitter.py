@@ -431,7 +431,6 @@ class AstMarkdownSplitter(MetadataAwareTextSplitter):
                 warnings.warn(
                     f"Block {child.__class__.__name__} can not be splitted in a new chunk. Block size: {block_size}, Chunk size: {max_chunk_size}. Treat it as an oversize chunk.",
                 )
-                # TODO: fallback to text split
                 chunks.append(block_content)
                 blocks = []
 

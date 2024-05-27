@@ -24,7 +24,6 @@ llm = ChatTongyi()
 
 def pdf2doc(file_path) -> [DOCUMENT]:
     """
-    todo: pdf文档抽取
     :param file_path: pdf 文档
     :return: doc
     """
