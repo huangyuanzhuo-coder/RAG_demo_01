@@ -13,7 +13,6 @@ from langchain_core.messages import BaseMessage
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.tools import Tool
-
 from loader.PDF_loader import RapidOCRPDFLoader
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
@@ -44,16 +43,9 @@ def pdf2doc(file_path) -> [DOCUMENT]:
 
 # 文档划分 与 嵌入
 def RAG_fun() -> RetrievalQA:
-    splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
-    loader = UnstructuredFileLoader("./md_files/test.md")
-    docs = loader.load()
-    splits = splitter.split_documents(docs)
-    for i in splits:
-        print(i)
 
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-    # embeddings.client = sentence_transformers.SentenceTransformer(embeddings.model_name, device='cpu')
-    vector_store = FAISS.from_documents(splits, embeddings)
+    vector_store = FAISS.load_local("loader/md_faiss_index", embeddings)
     retriever = vector_store.as_retriever()
 
     chain = RetrievalQA.from_chain_type(
@@ -64,16 +56,16 @@ def RAG_fun() -> RetrievalQA:
 
 
 def RAG_run(inputs) -> BaseMessage:
-    splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
-    loader = UnstructuredFileLoader("./md_files/test.md")
-    docs = loader.load()
-    splits = splitter.split_documents(docs)
-    for i in splits:
-        print(i)
-
+    # splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
+    # loader = UnstructuredFileLoader("./md_files/test.md")
+    # docs = loader.load()
+    # splits = splitter.split_documents(docs)
+    # for i in splits:
+    #     print(i)
+    #
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     # embeddings.client = sentence_transformers.SentenceTransformer(embeddings.model_name, device='cpu')
-    vector_store = FAISS.from_documents(splits, embeddings)
+    vector_store = FAISS.load_local("loader/md_faiss_index", embeddings)
     retriever = vector_store.as_retriever()
 
     prompt_template = """基于以下已知信息，简洁和专业的回答用户的问题。
