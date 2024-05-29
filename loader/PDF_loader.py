@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 from typing import List
@@ -6,12 +7,16 @@ from PIL import Image
 import numpy as np
 from pprint import pprint
 import tqdm
+from langchain.text_splitter import MarkdownTextSplitter
 from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores.faiss import FAISS
+from langchain_core.documents import Document
+
 from loader.ocr import get_ocr
 
 # from configs import PDF_OCR_THRESHOLD
 PDF_OCR_THRESHOLD = (0.6, 0.6)
-
 
 
 class RapidOCRPDFLoader(UnstructuredFileLoader):
@@ -88,9 +93,24 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
 
 
 def test_rapidocrpdfloader():
-    pdf_path = "../bs_challenge_financial_14b_dataset/pdf/0b46f7a2d67b5b59ad67cafffa0e12a9f0837790.PDF"
+    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
+    vector_store = FAISS.from_documents([Document(" ")], embeddings)
 
-    loader = RapidOCRPDFLoader(file_path=pdf_path)
-    docs = loader.load()
-    pprint(docs)
-    assert isinstance(docs, list) and len(docs) > 0 and isinstance(docs[0].page_content, str)
+    filepath = r'../bs_challenge_financial_14b_dataset/pdf/'
+    file_name = []
+    path_list = []
+    for i in os.listdir(filepath):
+        file_name.append(i)
+        path_list.append(os.path.join(filepath + i))
+
+    for j in range(10):
+        print("index" + str(j))
+        loader = RapidOCRPDFLoader(file_path=(path_list[j]))
+        docs = loader.load()
+        # pprint(docs)
+        assert isinstance(docs, list) and len(docs) > 0 and isinstance(docs[0].page_content, str)
+        splits = splitter.split_documents(docs)
+        vector_store.add_documents(splits)
+
+    vector_store.save_local("faiss_index_10")

@@ -1,4 +1,6 @@
 import os
+import uuid
+
 from filetype.types import DOCUMENT
 from langchain.agents import initialize_agent, AgentType
 from langchain.chains import RetrievalQA
@@ -13,6 +15,9 @@ from langchain_core.messages import BaseMessage
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.tools import Tool
+from llama_index.evaluation import RetrieverEvaluator, generate_question_context_pairs
+from llama_index.finetuning import EmbeddingQAFinetuneDataset
+
 from loader.PDF_loader import RapidOCRPDFLoader
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
@@ -43,7 +48,6 @@ def pdf2doc(file_path) -> [DOCUMENT]:
 
 # 文档划分 与 嵌入
 def RAG_fun() -> RetrievalQA:
-
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
     retriever = vector_store.as_retriever()
@@ -89,6 +93,30 @@ def RAG_run(inputs) -> BaseMessage:
     chain = setup_and_retrieval | prompt | llm
 
     return chain.invoke(inputs)
+
+
+def RAG_evaluate(question):
+    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    # embeddings.client = sentence_transformers.SentenceTransformer(embeddings.model_name, device='cpu')
+    vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
+    retriever = vector_store.as_retriever()
+    docs = vector_store.similarity_search_with_score(inputs, k=5)
+    print(docs)
+
+    querys = {}
+    question_id = str(uuid.uuid4())
+    querys[question_id] = question
+    qa_datasets = EmbeddingQAFinetuneDataset(
+        queries=querys, corpus=node_dict, relevant_docs=relevant_docs
+    )
+    qa_dataset = generate_question_context_pairs(
+        nodes, llm=llm, num_questions_per_chunk=2
+    )
+
+
+    metrics = ["mrr", "hit_rate"]
+    retriever_evaluator = RetrieverEvaluator.from_metric_names(metrics, retriever=retriever)
+    result = retriever_evaluator.evaluate(inputs, docs)
 
 
 if __name__ == '__main__':
