@@ -5,6 +5,7 @@ from langchain.text_splitter import MarkdownTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores.faiss import FAISS
+from langchain_core.documents import Document
 
 
 def pdf2markdown(filepath):
@@ -26,22 +27,22 @@ def pdf2markdown(filepath):
 def md2Faiss():
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
-    vector_store = FAISS.from_documents(embeddings)
+    vector_store = FAISS.from_documents([Document(" ")], embeddings)
 
     directory = Path('../md_files')
 
+    splits_list = []
     # 遍历目录下所有.md文件
     for md_file in directory.glob('**/*.md'):
+
         print(md_file)
         loader = UnstructuredFileLoader(str(md_file))
         docs = loader.load()
         splits = splitter.split_documents(docs)
-        print(splits[0])
-
+        splits_list.append(splits)
         vector_store.add_documents(splits)
-        vector_store = FAISS.from_documents(splits, embeddings)
 
-    vector_store.save_local("md_faiss_index")
+    vector_store.save_local("md_faiss_index_10")
 
 
 if __name__ == '__main__':

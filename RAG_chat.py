@@ -45,7 +45,7 @@ def pdf2doc(file_path) -> [DOCUMENT]:
 def RAG_fun() -> RetrievalQA:
 
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-    vector_store = FAISS.load_local("loader/md_faiss_index", embeddings)
+    vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
     retriever = vector_store.as_retriever()
 
     chain = RetrievalQA.from_chain_type(

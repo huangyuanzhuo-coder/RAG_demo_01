@@ -4,10 +4,8 @@ from langchain.agents import initialize_agent
 from langchain.agents import AgentType
 from langchain.chains import LLMMathChain
 from langchain.output_parsers import pydantic
-
 from langchain_community.chat_models import ChatTongyi
 from langchain_core.tools import Tool
-
 from RAG_chat import RAG_fun
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
@@ -27,7 +25,6 @@ tools = [
 agent = llm_chain + output_parser + tools
 llm_chain = llm + prompt
 """
-# tools可以是外部工具，也可以是另外包装的llm_chain。例如llm-math就是LLMMathChain
 # tools = load_tools(["serpapi", "llm-math"], llm=llm)
 agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
 result = agent.run("武汉力源信息技术股份有限公司的地址在哪里？")
