@@ -32,26 +32,6 @@ os.environ["OPENAI_API_KEY"] = "sk-kkwpLXt3DfPTDHvVFmWGT3BlbkFJuvo5eN7ul6XUqntGC
 llm = ChatTongyi()
 
 
-def pdf2doc(file_path) -> [DOCUMENT]:
-    """
-    :param file_path: pdf 文档
-    :return: doc
-    """
-    # file_path = "bs_challenge_financial_14b_dataset/pdf/0b46f7a2d67b5b59ad67cafffa0e12a9f0837790.PDF"
-    # loader = RapidOCRPDFLoader(file_path=file_path)
-    # docs = loader.load()
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=100)
-    loader = UnstructuredFileLoader("test.txt")
-    docs = loader.load()
-    splits = text_splitter.split_documents(docs)
-
-    # test
-    # docs = retriever.get_relevant_documents("武汉力源信息技术股份有限公司的地址在哪里？")
-    # print(docs)
-
-    return splits
-
-
 # 文档划分 与 嵌入
 def RAG_fun() -> RetrievalQA:
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
@@ -108,6 +88,7 @@ def RAG_evaluate(question):
 
 
 def eval_fun(result):
+    """原生Ragas方法，版本 >= 0.1.0"""
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     dataset = Dataset.from_dict({
         "question": [result["query"]],
