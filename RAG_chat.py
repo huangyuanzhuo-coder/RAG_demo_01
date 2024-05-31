@@ -55,7 +55,7 @@ def RAG_run(inputs) -> dict[str, Any]:
 
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
-    retriever = vector_store.as_retriever(k=2)
+    retriever = vector_store.as_retriever(k=5)
 
     chain = RetrievalQA.from_chain_type(
         llm=llm, retriever=retriever, return_source_documents=True
@@ -64,27 +64,26 @@ def RAG_run(inputs) -> dict[str, Any]:
     return chain.invoke(inputs)
 
 
-def RAG_evaluate(question):
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-    # embeddings.client = sentence_transformers.SentenceTransformer(embeddings.model_name, device='cpu')
-    vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
-    retriever = vector_store.as_retriever()
-    docs = vector_store.similarity_search_with_score(question, k=5)
-    print(docs)
+def RAG_rerank(query: str, result: dict):
+    from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
+    from llama_index.schema import NodeWithScore, QueryBundle, TextNode
 
-    querys = {}
-    question_id = str(uuid.uuid4())
-    querys[question_id] = question
-    # qa_datasets = EmbeddingQAFinetuneDataset(
-    #     queries=querys, corpus=node_dict, relevant_docs=relevant_docs
-    # )
-    # qa_dataset = generate_question_context_pairs(
-    #     nodes, llm=llm, num_questions_per_chunk=2
-    # )
+    reranker = FlagEmbeddingReranker(
+        top_n=3,
+        model="D:/code_all/HuggingFace/bge-reranker-large",
+        use_fp16=False
+    )
+    documents = [doc.page_content for doc in result["source_documents"]]
+    pprint(documents)
+    print("-" * 50)
 
-    metrics = ["mrr", "hit_rate"]
-    retriever_evaluator = RetrieverEvaluator.from_metric_names(metrics, retriever=retriever)
-    result = retriever_evaluator.evaluate(question, docs)
+    nodes = [NodeWithScore(node=TextNode(text=doc)) for doc in documents]
+
+    query_bundle = QueryBundle(query_str=query)
+    ranked_nodes = reranker._postprocess_nodes(nodes, query_bundle)
+    for node in ranked_nodes:
+        print(node.node.get_content(), "-> Score:", node.score)
+        print("*" * 50)
 
 
 def eval_fun(result):
@@ -93,7 +92,7 @@ def eval_fun(result):
     dataset = Dataset.from_dict({
         "question": [result["query"]],
         "answer": [result["result"]],
-        "contexts": [[result["source_documents"][0].page_content]]
+        "contexts": [[result["source_documents"][0].page_content]]  # 这里设置为弟弟一个文档是因为evaluate只能对一个文档和query进行测评
     })
 
     eval_results = evaluate(metrics=[faithfulness, answer_relevancy, context_relevancy], llm=llm, dataset=dataset,
@@ -114,5 +113,7 @@ def eval_fun(result):
 
 
 if __name__ == '__main__':
-    result = RAG_run("武汉力源信息技术股份有限公司的地址在哪里？")
-    eval_fun(result)
+    query = "武汉力源信息技术股份有限公司的地址在哪里？"
+    result = RAG_run(query)
+    RAG_rerank(query, result)
+    # eval_fun(result)
