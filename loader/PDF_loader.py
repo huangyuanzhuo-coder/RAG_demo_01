@@ -7,7 +7,7 @@ from PIL import Image
 import numpy as np
 from pprint import pprint
 import tqdm
-from langchain.text_splitter import MarkdownTextSplitter
+from langchain.text_splitter import MarkdownTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores.faiss import FAISS
@@ -94,7 +94,7 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
 
 def test_rapidocrpdfloader():
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-    splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=100)
     vector_store = FAISS.from_documents([Document(" ")], embeddings)
 
     filepath = r'../bs_challenge_financial_14b_dataset/pdf/'
@@ -114,3 +114,5 @@ def test_rapidocrpdfloader():
         vector_store.add_documents(splits)
 
     vector_store.save_local("faiss_index_10")
+
+

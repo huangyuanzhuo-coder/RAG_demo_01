@@ -33,7 +33,5 @@ agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION
 result = agent.run("武汉力源信息技术股份有限公司的地址在哪里？")
 print(result)
 
-embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
-retriever = vector_store.as_retriever()
+
 
