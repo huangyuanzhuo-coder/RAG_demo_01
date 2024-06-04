@@ -32,15 +32,12 @@ from mix_retriever import MixEsVectorRetriever
 from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
 from llama_index.schema import NodeWithScore, QueryBundle, TextNode
 
-# from ragas.langchain.evalchain import RagasEvaluatorChain
-
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
 os.environ["OPENAI_API_KEY"] = "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"
 
 llm = ChatTongyi()
 
 
-# 文档划分 与 嵌入
 def RAG_fun() -> RetrievalQA:
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     vector_store = FAISS.load_local("loader/faiss_index_10_mix", embeddings)
@@ -162,9 +159,6 @@ def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> list[Docum
                                          combine_strategy="mix")
     docs = mix_retriever.get_relevant_documents(query)
 
-    # for doc in docs:
-    #     print(doc.page_content)
-
     return docs
 
 
@@ -173,8 +167,9 @@ if __name__ == '__main__':
     # result = RAG_run(query)
     # pprint(result)
 
+    # mix search
     docs = multi_retrieval(query, "faiss_index_10_mix")
     pprint(docs)
     print(len(docs))
-    # RAG_rerank(query, result)
+
     # eval_fun(result)

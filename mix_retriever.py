@@ -16,9 +16,6 @@ def RAG_rerank(query: str, docs: list[Document]) -> list[Document]:
         use_fp16=False
     )
     documents = [doc.page_content for doc in docs]
-    # pprint(documents)
-    print("-" * 50)
-
     nodes = [NodeWithScore(node=TextNode(text=doc)) for doc in documents]
 
     query_bundle = QueryBundle(query_str=query)

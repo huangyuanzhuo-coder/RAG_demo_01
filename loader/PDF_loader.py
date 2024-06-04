@@ -24,11 +24,11 @@ PDF_OCR_THRESHOLD = (0.6, 0.6)
 class RapidOCRPDFLoader(UnstructuredFileLoader):
     def _get_elements(self) -> List:
         def rotate_img(img, angle):
-            '''
+            """
             img   --image
             angle --rotation angle
             return--rotated img
-            '''
+            """
 
             h, w = img.shape[:2]
             rotate_center = (w / 2, h / 2)
@@ -128,3 +128,8 @@ def test_rapidocrpdfloader():
         es_addText(splits, index_name)
 
     vector_store.save_local(index_name)
+
+
+if __name__ == '__main__':
+
+    test_rapidocrpdfloader()
