@@ -8,7 +8,7 @@ from langchain_community.chat_models import ChatTongyi
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.tools import Tool
-from RAG_chat import RAG_fun
+from RAG_chat import RAG_fun, RAG_mix_fun
 from llama_index.evaluation import RetrieverEvaluator
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
@@ -19,7 +19,7 @@ llm = ChatTongyi()
 tools = [
     Tool(
         name="Search_RAG",
-        func=RAG_fun().run,
+        func=RAG_mix_fun().run,
         description="根据问题在向量数据库中检索相关的信息,用于回答问题",
     )
 ]
@@ -30,7 +30,8 @@ llm_chain = llm + prompt
 """
 # tools = load_tools(["serpapi", "llm-math"], llm=llm)
 agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION, verbose=True)
-result = agent.run("武汉力源信息技术股份有限公司的地址在哪里？")
+# result = agent.run("安徽黄山胶囊股份有限公司的地址在哪里？")
+result = agent.run("安徽黄山胶囊股份有限公司的董事长是谁？")
 print(result)
 
 

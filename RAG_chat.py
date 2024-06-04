@@ -1,19 +1,22 @@
 import os
 import uuid
 from pprint import pprint
-from typing import Dict, Any
+from typing import Dict, Any, List
 import datasets
+import elasticsearch
 from datasets import Dataset
+from docx import Document
 from filetype.types import DOCUMENT
 from langchain.agents import initialize_agent, AgentType
 from langchain.chains import RetrievalQA
 from langchain.output_parsers import format_instructions
+from langchain.retrievers import EnsembleRetriever
 from langchain.text_splitter import RecursiveCharacterTextSplitter, MarkdownTextSplitter
 from langchain.tools.retriever import create_retriever_tool
 from langchain_community.chat_models import ChatTongyi
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_community.retrievers import BM25Retriever
+from langchain_community.retrievers import BM25Retriever, ElasticSearchBM25Retriever
 from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
@@ -22,8 +25,12 @@ from langchain_core.tools import Tool
 from llama_index.evaluation import RetrieverEvaluator, generate_question_context_pairs
 from llama_index.finetuning import EmbeddingQAFinetuneDataset
 from ragas import evaluate
+from ragas.evaluation import Result
 from ragas.metrics import faithfulness, answer_relevancy, context_relevancy, context_recall, context_precision
 from loader.PDF_loader import RapidOCRPDFLoader
+from mix_retriever import MixEsVectorRetriever
+from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
+from llama_index.schema import NodeWithScore, QueryBundle, TextNode
 
 # from ragas.langchain.evalchain import RagasEvaluatorChain
 
@@ -36,11 +43,35 @@ llm = ChatTongyi()
 # 文档划分 与 嵌入
 def RAG_fun() -> RetrievalQA:
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-    vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
+    vector_store = FAISS.load_local("loader/faiss_index_10_mix", embeddings)
+    # vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
     retriever = vector_store.as_retriever()
 
     chain = RetrievalQA.from_chain_type(
         llm=llm, retriever=retriever
+    )
+
+    return chain
+
+
+def RAG_mix_fun() -> RetrievalQA:
+    index_name = "faiss_index_10_mix"
+    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
+    vector_retriever = vector_store.as_retriever(k=5)
+
+    # keyword_retriever
+    elasticsearch_url = "http://localhost:9200"
+
+    client = elasticsearch.Elasticsearch(elasticsearch_url)
+    keyword_retriever = ElasticSearchBM25Retriever(client=client, index_name=index_name)
+
+    # mix
+    mix_retriever = MixEsVectorRetriever(vector_retriever=vector_retriever, keyword_retriever=keyword_retriever,
+                                         combine_strategy="mix")
+
+    chain = RetrievalQA.from_chain_type(
+        llm=llm, retriever=mix_retriever
     )
 
     return chain
@@ -65,10 +96,7 @@ def RAG_run(inputs) -> dict[str, Any]:
     return chain.invoke(inputs)
 
 
-def RAG_rerank(query: str, result: dict):
-    from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
-    from llama_index.schema import NodeWithScore, QueryBundle, TextNode
-
+def RAG_rerank(query: str, result: dict) -> list[NodeWithScore]:
     reranker = FlagEmbeddingReranker(
         top_n=3,
         model="D:/code_all/HuggingFace/bge-reranker-large",
@@ -86,8 +114,10 @@ def RAG_rerank(query: str, result: dict):
         print(node.node.get_content(), "-> Score:", node.score)
         print("*" * 50)
 
+    return ranked_nodes
 
-def eval_fun(result):
+
+def eval_fun(result) -> Result:
     """原生Ragas方法，版本 >= 0.1.0"""
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     dataset = Dataset.from_dict({
@@ -100,7 +130,9 @@ def eval_fun(result):
                             embeddings=embeddings)
     pprint(eval_results)
 
-    """RagasEvaluatorChain的方法需要使用chatgpt，且 ragas 的版本<0.1.0"""
+    return eval_results
+
+    # """RagasEvaluatorChain的方法需要使用chatgpt，且 ragas 的版本<0.1.0"""
     # from langchain_together import Together
     # make eval chains
     # eval_chains = {
@@ -112,19 +144,37 @@ def eval_fun(result):
     #     score_name = f"{name}_score"
     #     print(f"{score_name}: {eval_chain(result)[score_name]}")
 
-def multi_retrieval(query):
+
+def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> list[Document]:
+    # vector_retriever
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-    vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
+    vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
-    bm25_retriever = BM25Retriever.from_texts(
-        doc_list_1, metadatas=[{"source": 1}] * len(doc_list_1)
-    )
-    bm25_retriever.k = 2
+    # keyword_retriever
+    elasticsearch_url = "http://localhost:9200"
+
+    client = elasticsearch.Elasticsearch(elasticsearch_url)
+    keyword_retriever = ElasticSearchBM25Retriever(client=client, index_name=index_name)
+
+    # mix
+    mix_retriever = MixEsVectorRetriever(vector_retriever=vector_retriever, keyword_retriever=keyword_retriever,
+                                         combine_strategy="mix")
+    docs = mix_retriever.get_relevant_documents(query)
+
+    # for doc in docs:
+    #     print(doc.page_content)
+
+    return docs
 
 
 if __name__ == '__main__':
-    query = "武汉力源信息技术股份有限公司的地址在哪里？"
-    result = RAG_run(query)
-    RAG_rerank(query, result)
+    query = "安徽黄山胶囊股份有限公司的董事长是谁？"
+    # result = RAG_run(query)
+    # pprint(result)
+
+    docs = multi_retrieval(query, "faiss_index_10_mix")
+    pprint(docs)
+    print(len(docs))
+    # RAG_rerank(query, result)
     # eval_fun(result)

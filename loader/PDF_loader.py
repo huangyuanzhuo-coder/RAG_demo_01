@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 from typing import List
 import cv2
+import elasticsearch
 from PIL import Image
 import numpy as np
 from pprint import pprint
@@ -10,6 +11,7 @@ import tqdm
 from langchain.text_splitter import MarkdownTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders.unstructured import UnstructuredFileLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.retrievers import ElasticSearchBM25Retriever
 from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.documents import Document
 
@@ -92,27 +94,37 @@ class RapidOCRPDFLoader(UnstructuredFileLoader):
         return partition_text(text=text, **self.unstructured_kwargs)
 
 
+def es_addText(splits: list[Document], index_name: str):
+    elasticsearch_url = "http://localhost:9200"
+    docs = [doc.page_content for doc in splits]
+
+    client = elasticsearch.Elasticsearch(elasticsearch_url)
+    retriever = ElasticSearchBM25Retriever(client=client, index_name=index_name)
+    retriever.add_texts(docs)
+
+
 def test_rapidocrpdfloader():
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     splitter = RecursiveCharacterTextSplitter(chunk_size=512, chunk_overlap=100)
     vector_store = FAISS.from_documents([Document(" ")], embeddings)
 
     filepath = r'../bs_challenge_financial_14b_dataset/pdf/'
+    index_name = "faiss_index_10_mix"
     file_name = []
     path_list = []
     for i in os.listdir(filepath):
         file_name.append(i)
         path_list.append(os.path.join(filepath + i))
 
-    for j in range(10):
+    for j in range(1):
         print("index" + str(j))
         loader = RapidOCRPDFLoader(file_path=(path_list[j]))
         docs = loader.load()
         # pprint(docs)
         assert isinstance(docs, list) and len(docs) > 0 and isinstance(docs[0].page_content, str)
         splits = splitter.split_documents(docs)
+
         vector_store.add_documents(splits)
+        es_addText(splits, index_name)
 
-    vector_store.save_local("faiss_index_10")
-
-
+    vector_store.save_local(index_name)

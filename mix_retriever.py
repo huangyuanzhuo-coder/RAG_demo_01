@@ -1,17 +1,40 @@
+from pprint import pprint
 from typing import List
 
 from langchain.retrievers import EnsembleRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
+from llama_index.postprocessor import FlagEmbeddingReranker
+from llama_index.schema import NodeWithScore, QueryBundle, TextNode
 
+
+def RAG_rerank(query: str, docs: list[Document]) -> list[Document]:
+    reranker = FlagEmbeddingReranker(
+        top_n=3,
+        model="D:/code_all/HuggingFace/bge-reranker-large",
+        use_fp16=False
+    )
+    documents = [doc.page_content for doc in docs]
+    # pprint(documents)
+    print("-" * 50)
+
+    nodes = [NodeWithScore(node=TextNode(text=doc)) for doc in documents]
+
+    query_bundle = QueryBundle(query_str=query)
+    ranked_nodes = reranker._postprocess_nodes(nodes, query_bundle)
+    res = []
+    for node in ranked_nodes:
+        res.append(Document(node.node.get_content()))
+        # print(node.node.get_content(), "-> Score:", node.score)
+        # print("*" * 50)
+
+    return res
 
 class MixEsVectorRetriever(BaseRetriever):
 
-    vector_retriever = BaseRetriever
-
-
-    keyword_retriever = BaseRetriever
+    vector_retriever: BaseRetriever = None
+    keyword_retriever: BaseRetriever = None
     combine_strategy: str = 'mix'
 
     def _get_relevant_documents(
@@ -36,8 +59,10 @@ class MixEsVectorRetriever(BaseRetriever):
         # return combine_docs
 
         # EnsembleRetriever
-        ensemble_retriever = EnsembleRetriever(retriever=[self.vector_retriever, self.keyword_retriever], weights=[0.5, 0.5])
+        ensemble_retriever = EnsembleRetriever(retrievers=[self.vector_retriever, self.keyword_retriever], weights=[0.5, 0.5])
         docs = ensemble_retriever.invoke(query)
 
+        # rerank
+        docs = RAG_rerank(query, docs)
         return docs
 
