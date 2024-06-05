@@ -57,6 +57,7 @@ def RAG_mix_fun() -> RetrievalQA:
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
+
     # keyword_retriever
     elasticsearch_url = "http://localhost:9200"
 
@@ -142,7 +143,7 @@ def eval_fun(result) -> Result:
     #     print(f"{score_name}: {eval_chain(result)[score_name]}")
 
 
-def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> list[Document]:
+def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> dict[str, Any]:
     # vector_retriever
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
@@ -157,9 +158,13 @@ def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> list[Docum
     # mix
     mix_retriever = MixEsVectorRetriever(vector_retriever=vector_retriever, keyword_retriever=keyword_retriever,
                                          combine_strategy="mix")
-    docs = mix_retriever.get_relevant_documents(query)
+    # docs = mix_retriever.invoke(query)  # list[Document]
 
-    return docs
+    chain = RetrievalQA.from_chain_type(
+        llm=llm, retriever=mix_retriever, return_source_documents=True
+    )
+
+    return chain.invoke(query)  # list[Document]
 
 
 if __name__ == '__main__':
@@ -172,4 +177,4 @@ if __name__ == '__main__':
     pprint(docs)
     print(len(docs))
 
-    # eval_fun(result)
+    eval_fun(docs)

@@ -1,6 +1,5 @@
 from pprint import pprint
 from typing import List
-
 from langchain.retrievers import EnsembleRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
@@ -28,14 +27,14 @@ def RAG_rerank(query: str, docs: list[Document]) -> list[Document]:
 
     return res
 
-class MixEsVectorRetriever(BaseRetriever):
 
+class MixEsVectorRetriever(BaseRetriever):
     vector_retriever: BaseRetriever = None
     keyword_retriever: BaseRetriever = None
     combine_strategy: str = 'mix'
 
     def _get_relevant_documents(
-        self, query: str, *, run_manager: CallbackManagerForRetrieverRun
+            self, query: str, *, run_manager: CallbackManagerForRetrieverRun
     ) -> List[Document]:
         # vector_docs = self.vector_retriever.get_relevant_documents(query,callbacks=run_manager.get_child())
         # keyword_docs = self.keyword_retriever.get_relevant_documents(query,callbacks=run_manager.get_child())
@@ -55,11 +54,12 @@ class MixEsVectorRetriever(BaseRetriever):
         # combine_docs = list(combine_docs_dict.values())
         # return combine_docs
 
-        # EnsembleRetriever
-        ensemble_retriever = EnsembleRetriever(retrievers=[self.vector_retriever, self.keyword_retriever], weights=[0.5, 0.5])
+        # EnsembleRetriever 实现
+        ensemble_retriever = EnsembleRetriever(retrievers=[self.vector_retriever, self.keyword_retriever],
+                                               weights=[0.5, 0.5])
         docs = ensemble_retriever.invoke(query)
 
         # rerank
         docs = RAG_rerank(query, docs)
-        return docs
 
+        return docs

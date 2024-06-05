@@ -36,21 +36,19 @@ def es_addText(splits: list[Document], index_name: str):
     retriever.add_texts(docs)
 
 
-def md2Faiss():
+def md2FaissES():
     embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
-    splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
+    splitter = MarkdownTextSplitter(chunk_size=256, chunk_overlap=32)
     vector_store = FAISS.from_documents([Document(" ")], embeddings)
 
-    directory = Path('../md_files')
-    index_name = "md_faiss_index_10"
-    splits_list = []
+    directory = Path('../md_file')
+    index_name = "md_Faiss_ES"
     # 遍历目录下所有.md文件
     for md_file in directory.glob('**/*.md'):
         print(md_file)
         loader = UnstructuredFileLoader(str(md_file))
         docs = loader.load()
         splits = splitter.split_documents(docs)
-        splits_list.append(splits)
 
         vector_store.add_documents(splits)
         es_addText(splits, index_name)
@@ -58,4 +56,4 @@ def md2Faiss():
 
 
 if __name__ == '__main__':
-    md2Faiss()
+    md2FaissES()
