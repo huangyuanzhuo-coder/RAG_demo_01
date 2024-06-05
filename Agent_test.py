@@ -29,7 +29,7 @@ agent = initialize_agent(tools, llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION
 
 # result = agent.run("安徽黄山胶囊股份有限公司的地址在哪里？")
 # result = agent.run("安徽黄山胶囊股份有限公司的董事长是谁？")
-result = agent.run("我想查询安徽黄山胶囊股份有限公司的主承销商收款银行是那个？")
+result = agent.run("我想查询安徽黄山胶囊股份有限公司在2016年1-6月的营业收入是多少？")
 
 print(result)
 

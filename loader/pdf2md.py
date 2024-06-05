@@ -3,7 +3,7 @@ import aspose.words as aw
 import os
 
 import elasticsearch
-from langchain.text_splitter import MarkdownTextSplitter
+from langchain.text_splitter import MarkdownTextSplitter, RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.retrievers import ElasticSearchBM25Retriever
@@ -29,27 +29,26 @@ def pdf2markdown(filepath):
 
 def es_addText(splits: list[Document], index_name: str):
     elasticsearch_url = "http://localhost:9200"
-    docs = [doc.page_content for doc in splits]
-
+    docs = [doc.page_content for doc in splits[:200]]
     client = elasticsearch.Elasticsearch(elasticsearch_url)
     retriever = ElasticSearchBM25Retriever(client=client, index_name=index_name)
     retriever.add_texts(docs)
 
 
 def md2FaissES():
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    embeddings = HuggingFaceEmbeddings(model_name="D:\code\HuggingFace/bge-large-zh-v1.5")
     splitter = MarkdownTextSplitter(chunk_size=256, chunk_overlap=32)
+    # splitter = RecursiveCharacterTextSplitter(chunk_size=10, chunk_overlap=0)
     vector_store = FAISS.from_documents([Document(" ")], embeddings)
 
     directory = Path('../md_file')
-    index_name = "md_Faiss_ES"
+    index_name = "esfaiss_03c6"
     # 遍历目录下所有.md文件
     for md_file in directory.glob('**/*.md'):
         print(md_file)
         loader = UnstructuredFileLoader(str(md_file))
         docs = loader.load()
         splits = splitter.split_documents(docs)
-
         vector_store.add_documents(splits)
         es_addText(splits, index_name)
     vector_store.save_local(index_name)

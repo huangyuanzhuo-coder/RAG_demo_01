@@ -52,8 +52,8 @@ def RAG_fun() -> RetrievalQA:
 
 
 def RAG_mix_fun() -> RetrievalQA:
-    index_name = "faiss_index_10_mix"
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    index_name = "esfaiss_03c6"
+    embeddings = HuggingFaceEmbeddings(model_name="D:\code\HuggingFace/bge-large-zh-v1.5")
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
@@ -145,7 +145,7 @@ def eval_fun(result) -> Result:
 
 def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> dict[str, Any]:
     # vector_retriever
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    embeddings = HuggingFaceEmbeddings(model_name="D:\code\HuggingFace/bge-large-zh-v1.5")
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
