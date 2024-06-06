@@ -1,9 +1,10 @@
 import os
 import uuid
 from pprint import pprint
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Iterator
 import datasets
 import elasticsearch
+import torch
 import yaml
 from datasets import Dataset
 from docx import Document
@@ -36,16 +37,19 @@ from llama_index.schema import NodeWithScore, QueryBundle, TextNode
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
 os.environ["OPENAI_API_KEY"] = "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"
 
-llm = ChatTongyi()
+llm = ChatTongyi(streaming=True)
 
 with open("config/config,yaml", 'r') as f:
     params = yaml.safe_load(f)
 EMBEDDING_PATH = params["embedding_path"]["company"]
 RERANK_PATH = params["rerank_path"]["company"]
 
+EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+
+
 
 def RAG_fun() -> RetrievalQA:
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH, model_kwargs={'device': EMBEDDING_DEVICE})
     vector_store = FAISS.load_local("loader/faiss_index_10_mix", embeddings)
     # vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
     retriever = vector_store.as_retriever()
@@ -58,7 +62,7 @@ def RAG_fun() -> RetrievalQA:
 
 def RAG_mix_fun() -> RetrievalQA:
     index_name = "faiss_index_10_mix"
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH, model_kwargs={'device': EMBEDDING_DEVICE})
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
@@ -79,7 +83,7 @@ def RAG_mix_fun() -> RetrievalQA:
 
 
 def RAG_run(inputs) -> dict[str, Any]:
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH, model_kwargs={'device': EMBEDDING_DEVICE})
     vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
     retriever = vector_store.as_retriever(k=5)
 
@@ -112,7 +116,7 @@ def RAG_rerank(query: str, result: dict) -> list[NodeWithScore]:
 
 def eval_fun(result: dict) -> Result:
     """原生Ragas方法，版本 >= 0.1.0"""
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH, model_kwargs={'device': EMBEDDING_DEVICE})
     dataset = Dataset.from_dict({
         "question": [result["query"]],
         "answer": [result["result"]],
@@ -137,9 +141,9 @@ def eval_fun(result: dict) -> Result:
     #     print(f"{score_name}: {eval_chain(result)[score_name]}")
 
 
-def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> dict[str, Any]:
+def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> Iterator[dict[str, Any]]:
     # vector_retriever
-    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH, model_kwargs={'device': EMBEDDING_DEVICE})
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
@@ -157,7 +161,7 @@ def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> dict[str, 
         llm=llm, retriever=mix_retriever, return_source_documents=True
     )
 
-    return chain.invoke(query)  # dict
+    return chain.stream(query)  # dict
 
 
 if __name__ == '__main__':
