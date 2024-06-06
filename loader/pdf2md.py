@@ -42,7 +42,7 @@ def md2FaissES():
     vector_store = FAISS.from_documents([Document(" ")], embeddings)
 
     directory = Path('../md_file')
-    index_name = "md_Faiss_ES"
+    index_name = "md_faiss_es"
     # 遍历目录下所有.md文件
     for md_file in directory.glob('**/*.md'):
         print(md_file)

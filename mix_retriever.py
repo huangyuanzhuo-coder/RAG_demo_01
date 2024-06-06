@@ -1,11 +1,18 @@
 from pprint import pprint
 from typing import List
+
+import yaml
 from langchain.retrievers import EnsembleRetriever
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
 from llama_index.postprocessor import FlagEmbeddingReranker
 from llama_index.schema import NodeWithScore, QueryBundle, TextNode
+
+with open("config/config,yaml", 'r') as f:
+    params = yaml.safe_load(f)
+EMBEDDING_PATH = params["embedding_path"]["company"]
+RERANK_PATH = params["rerank_path"]["company"]
 
 
 def RAG_rerank(query: str, docs: list[Document]) -> list[Document]:

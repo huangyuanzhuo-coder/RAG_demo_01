@@ -1,0 +1,9 @@
+embedding_path:
+    company: 'D:\code_all\HuggingFace\bge'
+    home: ''
+    linux: '/data0/hyz/models--BAAI--bge-large-zh-v1.5'
+
+rerank_path:
+    company: 'D:\code_all\HuggingFace\bge-reranker-large'
+    home: ''
+    linux: '/data0/hyz/models--BAAI--bge-reranker-large'

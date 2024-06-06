@@ -4,6 +4,7 @@ from pprint import pprint
 from typing import Dict, Any, List
 import datasets
 import elasticsearch
+import yaml
 from datasets import Dataset
 from docx import Document
 from filetype.types import DOCUMENT
@@ -37,9 +38,14 @@ os.environ["OPENAI_API_KEY"] = "sk-kkwpLXt3DfPTDHvVFmWGT3BlbkFJuvo5eN7ul6XUqntGC
 
 llm = ChatTongyi()
 
+with open("config/config,yaml", 'r') as f:
+    params = yaml.safe_load(f)
+EMBEDDING_PATH = params["embedding_path"]["company"]
+RERANK_PATH = params["rerank_path"]["company"]
+
 
 def RAG_fun() -> RetrievalQA:
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
     vector_store = FAISS.load_local("loader/faiss_index_10_mix", embeddings)
     # vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
     retriever = vector_store.as_retriever()
@@ -47,20 +53,17 @@ def RAG_fun() -> RetrievalQA:
     chain = RetrievalQA.from_chain_type(
         llm=llm, retriever=retriever
     )
-
     return chain
 
 
 def RAG_mix_fun() -> RetrievalQA:
     index_name = "faiss_index_10_mix"
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
-
     # keyword_retriever
     elasticsearch_url = "http://localhost:9200"
-
     client = elasticsearch.Elasticsearch(elasticsearch_url)
     keyword_retriever = ElasticSearchBM25Retriever(client=client, index_name=index_name)
 
@@ -76,14 +79,7 @@ def RAG_mix_fun() -> RetrievalQA:
 
 
 def RAG_run(inputs) -> dict[str, Any]:
-    # splitter = MarkdownTextSplitter(chunk_size=512, chunk_overlap=100)
-    # loader = UnstructuredFileLoader("./md_files/test.md")
-    # docs = loader.load()
-    # splits = splitter.split_documents(docs)
-    # for i in splits:
-    #     print(i)
-
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
     vector_store = FAISS.load_local("loader/md_faiss_index_10", embeddings)
     retriever = vector_store.as_retriever(k=5)
 
@@ -97,7 +93,7 @@ def RAG_run(inputs) -> dict[str, Any]:
 def RAG_rerank(query: str, result: dict) -> list[NodeWithScore]:
     reranker = FlagEmbeddingReranker(
         top_n=3,
-        model="D:/code_all/HuggingFace/bge-reranker-large",
+        model=RERANK_PATH,
         use_fp16=False
     )
     documents = [doc.page_content for doc in result["source_documents"]]
@@ -105,7 +101,6 @@ def RAG_rerank(query: str, result: dict) -> list[NodeWithScore]:
     print("-" * 50)
 
     nodes = [NodeWithScore(node=TextNode(text=doc)) for doc in documents]
-
     query_bundle = QueryBundle(query_str=query)
     ranked_nodes = reranker._postprocess_nodes(nodes, query_bundle)
     for node in ranked_nodes:
@@ -115,9 +110,9 @@ def RAG_rerank(query: str, result: dict) -> list[NodeWithScore]:
     return ranked_nodes
 
 
-def eval_fun(result) -> Result:
+def eval_fun(result: dict) -> Result:
     """原生Ragas方法，版本 >= 0.1.0"""
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
     dataset = Dataset.from_dict({
         "question": [result["query"]],
         "answer": [result["result"]],
@@ -127,7 +122,6 @@ def eval_fun(result) -> Result:
     eval_results = evaluate(metrics=[faithfulness, answer_relevancy, context_relevancy], llm=llm, dataset=dataset,
                             embeddings=embeddings)
     pprint(eval_results)
-
     return eval_results
 
     # """RagasEvaluatorChain的方法需要使用chatgpt，且 ragas 的版本<0.1.0"""
@@ -145,13 +139,12 @@ def eval_fun(result) -> Result:
 
 def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> dict[str, Any]:
     # vector_retriever
-    embeddings = HuggingFaceEmbeddings(model_name="D:/code_all/HuggingFace/bge")
+    embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH)
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
     vector_retriever = vector_store.as_retriever(k=5)
 
     # keyword_retriever
     elasticsearch_url = "http://localhost:9200"
-
     client = elasticsearch.Elasticsearch(elasticsearch_url)
     keyword_retriever = ElasticSearchBM25Retriever(client=client, index_name=index_name)
 
@@ -164,7 +157,7 @@ def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> dict[str, 
         llm=llm, retriever=mix_retriever, return_source_documents=True
     )
 
-    return chain.invoke(query)  # list[Document]
+    return chain.invoke(query)  # dict
 
 
 if __name__ == '__main__':
@@ -173,8 +166,7 @@ if __name__ == '__main__':
     # pprint(result)
 
     # mix search
-    docs = multi_retrieval(query, "faiss_index_10_mix")
-    pprint(docs)
-    print(len(docs))
+    res = multi_retrieval(query, "md_faiss_es_01")
+    pprint(res)
 
-    eval_fun(docs)
+    # eval_fun(res)
