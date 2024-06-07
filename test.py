@@ -64,7 +64,7 @@ chain = ConversationalRetrievalChain.from_llm(llm=llm, retriever=mix_retriever, 
 
 tools = [
     Tool(
-        func=chain.run(),
+        func=chain,
         name="Search and answer",
         description="Search the details of the company to answer the question",
     ),
