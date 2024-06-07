@@ -70,3 +70,7 @@ class MixEsVectorRetriever(BaseRetriever):
         docs = RAG_rerank(query, docs)
 
         return docs
+
+    def return_retriever(self) -> BaseRetriever:
+        return EnsembleRetriever(retrievers=[self.vector_retriever, self.keyword_retriever],
+                                               weights=[0.5, 0.5])

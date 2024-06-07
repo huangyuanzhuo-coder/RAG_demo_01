@@ -22,6 +22,7 @@ from langchain_community.retrievers import BM25Retriever, ElasticSearchBM25Retri
 from langchain_community.vectorstores.faiss import FAISS
 from langchain_core.messages import BaseMessage
 from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
+from langchain_core.retrievers import BaseRetriever
 from langchain_core.runnables import RunnableParallel, RunnablePassthrough
 from langchain_core.tools import Tool
 from llama_index.evaluation import RetrieverEvaluator, generate_question_context_pairs
@@ -45,7 +46,6 @@ EMBEDDING_PATH = params["embedding_path"]["company"]
 RERANK_PATH = params["rerank_path"]["company"]
 
 EMBEDDING_DEVICE = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
-
 
 
 def RAG_fun() -> RetrievalQA:
