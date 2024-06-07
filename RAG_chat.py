@@ -38,7 +38,7 @@ from llama_index.schema import NodeWithScore, QueryBundle, TextNode
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
 os.environ["OPENAI_API_KEY"] = "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"
 
-llm = ChatTongyi(streaming=True)
+llm = ChatTongyi()
 
 with open("config/config,yaml", 'r') as f:
     params = yaml.safe_load(f)
@@ -141,7 +141,7 @@ def eval_fun(result: dict) -> Result:
     #     print(f"{score_name}: {eval_chain(result)[score_name]}")
 
 
-def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> Iterator[dict[str, Any]]:
+def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> dict[str, Any]:
     # vector_retriever
     embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_PATH, model_kwargs={'device': EMBEDDING_DEVICE})
     vector_store = FAISS.load_local(f"loader/{index_name}", embeddings)
@@ -161,7 +161,7 @@ def multi_retrieval(query, index_name: str = "faiss_index_10_mix") -> Iterator[d
         llm=llm, retriever=mix_retriever, return_source_documents=True
     )
 
-    return chain.stream(query)  # dict
+    return chain.invoke(query)  # dict
 
 
 if __name__ == '__main__':
