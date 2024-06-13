@@ -7,30 +7,14 @@ import elasticsearch
 import torch
 import yaml
 from datasets import Dataset
-from docx import Document
-from filetype.types import DOCUMENT
-from langchain.agents import initialize_agent, AgentType
 from langchain.chains import RetrievalQA
-from langchain.output_parsers import format_instructions
-from langchain.retrievers import EnsembleRetriever
-from langchain.text_splitter import RecursiveCharacterTextSplitter, MarkdownTextSplitter
-from langchain.tools.retriever import create_retriever_tool
 from langchain_community.chat_models import ChatTongyi
-from langchain_community.document_loaders import UnstructuredFileLoader
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.retrievers import BM25Retriever, ElasticSearchBM25Retriever
 from langchain_community.vectorstores.faiss import FAISS
-from langchain_core.messages import BaseMessage
-from langchain_core.prompts import PromptTemplate, ChatPromptTemplate
-from langchain_core.retrievers import BaseRetriever
-from langchain_core.runnables import RunnableParallel, RunnablePassthrough
-from langchain_core.tools import Tool
-from llama_index.evaluation import RetrieverEvaluator, generate_question_context_pairs
-from llama_index.finetuning import EmbeddingQAFinetuneDataset
 from ragas import evaluate
 from ragas.evaluation import Result
 from ragas.metrics import faithfulness, answer_relevancy, context_relevancy, context_recall, context_precision
-from loader.PDF_loader import RapidOCRPDFLoader
 from mix_retriever import MixEsVectorRetriever
 from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
 from llama_index.schema import NodeWithScore, QueryBundle, TextNode

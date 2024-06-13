@@ -1,0 +1,20 @@
+<Books>
+    <Book id="1">
+        <Title>1984</Title>
+        <Author>George Orwell</Author>
+        <Year>1949</Year>
+        <Price>10.99</Price>
+    </Book>
+    <Book id="2">
+        <Title>To Kill a Mockingbird</Title>
+        <Author>Harper Lee</Author>
+        <Year>1960</Year>
+        <Price>9.99</Price>
+    </Book>
+    <Book id="3">
+        <Title>The Great Gatsby</Title>
+        <Author>F. Scott Fitzgerald</Author>
+        <Year>1925</Year>
+        <Price>8.99</Price>
+    </Book>
+</Books>
