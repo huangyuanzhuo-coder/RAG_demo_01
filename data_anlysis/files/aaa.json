@@ -1,0 +1,21 @@
+[
+  {"id": 1, "Year": 2019, "Exports_as_a_percentage_of_GDP": "11.73%"},
+  {"id": 2, "Year": 2018, "Exports_as_a_percentage_of_GDP": "12.22%"},
+  {"id": 3, "Year": 2017, "Exports_as_a_percentage_of_GDP": "12.09%"},
+  {"id": 4, "Year": 2016, "Exports_as_a_percentage_of_GDP": "11.87%"},
+  {"id": 5, "Year": 2015, "Exports_as_a_percentage_of_GDP": "12.44%"},
+  {"id": 6, "Year": 2014, "Exports_as_a_percentage_of_GDP": "13.54%"},
+  {"id": 6, "Year": 2013, "Exports_as_a_percentage_of_GDP": "13.54%"},
+  {"id": 7, "Year": 2012, "Exports_as_a_percentage_of_GDP": "13.53%"},
+  {"id": 8, "Year": 2011, "Exports_as_a_percentage_of_GDP": "13.53%"},
+  {"id": 9, "Year": 2010, "Exports_as_a_percentage_of_GDP": "12.32%"},
+  {"id": 10, "Year": 2009, "Exports_as_a_percentage_of_GDP": "11.01%"},
+  {"id": 11, "Year": 2008, "Exports_as_a_percentage_of_GDP": "12.51%"},
+  {"id": 12, "Year": 2007, "Exports_as_a_percentage_of_GDP": "11.5%"},
+  {"id": 13, "Year": 2006, "Exports_as_a_percentage_of_GDP": "10.65%"},
+  {"id": 14, "Year": 2005, "Exports_as_a_percentage_of_GDP": "10%"},
+  {"id": 15, "Year": 2004, "Exports_as_a_percentage_of_GDP": "9.63%"},
+  {"id": 16, "Year": 2003, "Exports_as_a_percentage_of_GDP": "9.04%"},
+  {"id": 17, "Year": 2002, "Exports_as_a_percentage_of_GDP": "9.13%"},
+  {"id": 18, "Year": 2001, "Exports_as_a_percentage_of_GDP": "9.67%"}
+]

@@ -1,23 +1,19 @@
 import json
 import os
 import xml.etree.ElementTree as ET
-from xml.dom import minidom
+from pprint import pprint
 
 import langchain
 import pandas as pd
-import torch
-import yaml
+from langchain.chains import LLMChain
 from langchain_community.chat_models import ChatTongyi
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
 from lxml.etree import SubElement, Element
 from lxml.html import tostring
 
 os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
 os.environ["OPENAI_API_KEY"] = "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"
 
-llm = ChatTongyi()
-
+llm = ChatTongyi(model_kwargs={"temperature": 0.7})
 
 
 def xml_to_dataframe(xml_data):
@@ -86,46 +82,68 @@ if __name__ == '__main__':
     dir_path = "files"
     file_names = os.listdir(dir_path)
     print(file_names)
-
     files = [f for f in file_names if os.path.isfile(os.path.join(dir_path, f))]
+    query = ""
 
-    for file_name in files[:1]:
+    for index, file_name in enumerate(files[:5]):
+        if not file_name.endswith(".json"):
+            continue
         file_path = os.path.join(dir_path, file_name)
         print(file_path)
-        df = ""
         if file_name.endswith(".xml"):
             with open(file_path, "r", encoding="utf-8") as f:
                 xml_data = f.read()
                 df = xml_to_dataframe(xml_data)
-                print(df)
+                pprint(df.head())
+                query += f"图表{index + 1}:\n" + df_to_xml(df) + "\n"
 
         elif file_name.endswith(".json"):
             with open(file_path, "r", encoding="utf-8") as f:
                 json_data = json.loads(f.read())
                 df = pd.json_normalize(json_data)
                 print(df)
+                query += f"图表{index + 1}:\n" + str(df.to_html()) + "\n"
         elif file_name.endswith(".csv"):
             df = pd.read_csv(file_path)
             df = df.dropna(axis=1, how="all")
             df = df.dropna(axis=0, how="all")
             print(df)
+            query += f"图表{index + 1}:\n" + df_to_xml(df) + "\n"
 
-        xml_string = df_to_xml(df)
-        print(xml_string)
-        print("-" * 70)
+    # xml_string = df_to_xml(df)
+    # print(xml_string)
+    # print("-" * 70)
+    prompt = """你是一个数据分析师，根据各种形式的数据进行分析、推断和总结。
+我将给你多个HTML形式的表格，请你对各个表格中的数据进行分析，推断并总结表格所想要表达的信息或趋势，并在最后给出全局的总结和建议。
+要求：
+1.不需要将表格中的所有信息进行展示，可以根据情况适当阐述一些具有代表性的数据,确保这些数据的真实性。
+2.适当描述数据的变化，并根据数据推断当前的状态或者趋势，但要严格使用图表中给出的数据，符合数据真实的变化趋势，不能捏造数据，虚构对数据的阐述。
+3.对于数据的趋势推断，请严格根据数据变化判断，不能遗漏或者夸大说辞。
+4.最后对根据所有图表的信息，生成一个总的概述总结。
 
-        prompt = """你是一个数据分析师，根据各种心事的数据进行分析、推断和总结
-我将给你一个xml形式的表格，请你对表格中的数据进行分析和总结，推断表格所想要表达的信息，以及趋势，并给出建议
-表格为：
+以下给出各个图表：
 {query}"""
-        PromptTemplate = langchain.PromptTemplate(template=prompt, input_variables=["query"])
-        chain = llm | PromptTemplate | {"query": RunnablePassthrough()} | StrOutputParser()
+    PromptTemplate = langchain.PromptTemplate(template=prompt, input_variables=["query"])
+    chain = LLMChain(prompt=PromptTemplate, llm=llm, verbose=True)
 
-        res = chain.invoke(xml_string)
-        print(res)
+    res = chain.invoke({"query": query})
+    print(res["text"])
 
-    # 转换XML数据为DataFrame
-    # df = xml_to_dataframe(xml_data)
+    prompt1 = """你是一个数据分析师，根据各种形式的数据进行分析、推断和总结。
+我将给你多个HTML形式的表格，以及对表格的总结分析与建议，请你判断其是否存在错误的地方并更正
+要求：
+1.检查分析中的数据是否正确，如有不正确，请按照表格中的数据对分析结果进行改正。
+2.对于分析中描述的变化趋势或者峰值节点，请你判断是否正确，如有不正确，请重新分析表格并改正。
+3.对于数据的趋势推断，请严格根据数据变化判断，不能遗漏或者夸大说辞。
+4.最后重新生成一份新的总结。
 
-    # 显示DataFrame
-    # print(df)
+以下给出各个图表：""" + str(query) + """
+以下是表格的总结与分析：
+{query}
+"""
+
+    PromptTemplate = langchain.PromptTemplate(template=prompt1, input_variables=["query"])
+    chain1 = langchain.LLMChain(prompt=PromptTemplate, llm=llm, verbose=True)
+
+    res = chain1.invoke(res["text"])
+    print(res["text"])

@@ -1,0 +1,57 @@
+[
+    {
+        "id": 1,
+        "Year": "2026*",
+        "Budget_balance_to_GDP_ratio": "-1.53%"
+    },
+    {
+        "id": 2,
+        "Year": "2025*",
+        "Budget_balance_to_GDP_ratio": "-1.69%"
+    },
+    {
+        "id": 3,
+        "Year": "2024*",
+        "Budget_balance_to_GDP_ratio": "-1.79%"
+    },
+    {
+        "id": 4,
+        "Year": "2023*",
+        "Budget_balance_to_GDP_ratio": "-1.99%"
+    },
+    {
+        "id": 5,
+        "Year": "2022*",
+        "Budget_balance_to_GDP_ratio": "-2.62%"
+    },
+    {
+        "id": 6,
+        "Year": "2021*",
+        "Budget_balance_to_GDP_ratio": "-8.87%"
+    },
+    {
+        "id": 7,
+        "Year": "2020*",
+        "Budget_balance_to_GDP_ratio": "-9.86%"
+    },
+    {
+        "id": 8,
+        "Year": "2019",
+        "Budget_balance_to_GDP_ratio": "0.61%"
+    },
+    {
+        "id": 9,
+        "Year": "2018",
+        "Budget_balance_to_GDP_ratio": "0.9%"
+    },
+    {
+        "id": 10,
+        "Year": "2017",
+        "Budget_balance_to_GDP_ratio": "1.06%"
+    },
+    {
+        "id": 11,
+        "Year": "2016",
+        "Budget_balance_to_GDP_ratio": "0.61%"
+    }
+]

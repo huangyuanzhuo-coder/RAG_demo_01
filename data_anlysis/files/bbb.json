@@ -1,0 +1,15 @@
+[
+  {"id": 1, "Year": 2020, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 26303},
+  {"id": 2, "Year": 2019, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 25807},
+  {"id": 3, "Year": 2018, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 23606},
+  {"id": 4, "Year": 2017, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 19021},
+  {"id": 5, "Year": 2016, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 18676},
+  {"id": 6, "Year": 2015, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 17978},
+  {"id": 7, "Year": 2014, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 17955},
+  {"id": 8, "Year": 2013, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 19263},
+  {"id": 9, "Year": 2012, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 20805},
+  {"id": 10, "Year": 2011, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 22603},
+  {"id": 11, "Year": 2010, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 23263},
+  {"id": 12, "Year": 2009, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 22721},
+  {"id": 13, "Year": 2008, "Total_revenue_from_U.S._Government_in_million_U.S._dollars": 18442}
+]
