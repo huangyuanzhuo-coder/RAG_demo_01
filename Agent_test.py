@@ -7,8 +7,8 @@ from langchain_community.chat_models import ChatTongyi
 from langchain_core.tools import Tool
 from RAG_chat import RAG_fun, RAG_mix_fun
 
-os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
-os.environ["SERPAPI_API_KEY"] = "e7c902e28eb68593a62743a5b269f55ca6725996140fe6d8aff7408ad11ea118"  # google_key
+os.environ["DASHSCOPE_API_KEY"] = ""
+os.environ["SERPAPI_API_KEY"] = ""
 
 llm = ChatTongyi()
 
