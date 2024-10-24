@@ -11,7 +11,7 @@ from langchain_community.vectorstores.faiss import FAISS
 from RAG_chat import EMBEDDING_PATH, EMBEDDING_DEVICE
 from mix_retriever import MixEsVectorRetriever
 
-os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
+os.environ["DASHSCOPE_API_KEY"] = ""
 
 
 def get_retriever():
