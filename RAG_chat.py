@@ -19,8 +19,8 @@ from mix_retriever import MixEsVectorRetriever
 from llama_index.postprocessor.flag_embedding_reranker import FlagEmbeddingReranker
 from llama_index.schema import NodeWithScore, QueryBundle, TextNode
 
-os.environ["DASHSCOPE_API_KEY"] = "sk-146d6977be0b406fb18a4bb9c54d9cf0"
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["DASHSCOPE_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = ""
 
 llm = ChatTongyi()
 
